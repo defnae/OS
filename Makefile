@@ -20,8 +20,15 @@ RESET := \033[0m
 ARCH ?= $(shell uname -m)
 BOOT ?= UEFI
 
-DISK_SIZE := 135307776
-PART_SIZE := 134242304
+DISK_SIZE := 68223488
+ESP_SIZE := 33579008
+PART_SIZE := 33579008
+
+DISK_SECTORS := $(shell echo $$(($(DISK_SIZE) / 512)))
+ESP_SECTORS := $(shell echo $$(($(ESP_SIZE) / 512)))
+PART_SECTORS := $(shell echo $$(($(PART_SIZE) / 512)))
+
+PART_START := $(shell echo $$((2048 + $(ESP_SIZE) / 512)))
 
 ifeq ($(ARCH), x86_64)
     TRIPLE = x86_64-none-elf
@@ -207,7 +214,7 @@ stage1:
 
 	@printf "\n    $(CYAN)→$(RESET) Assembling Stage 1..\n\n"
 
-	@set -x; set -x; llvm-mc -triple i386-none-elf -filetype obj -defsym SECTORS=$(SECTORS) "$(SOURCE)/bootloader/bios/stage1/main.s" -o "$(BUILD)/bootloader/bios/stage1/main.o" || { \
+	@set -x; set -x; llvm-mc -triple i386-none-elf -filetype obj -defsym SECTORS=$(SECTORS) -defsym DISK=$(DISK_SECTORS) "$(SOURCE)/bootloader/bios/stage1/main.s" -o "$(BUILD)/bootloader/bios/stage1/main.o" || { \
 	    code=$$?; \
 	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to Assemble Stage 1. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
@@ -377,33 +384,33 @@ ifneq ($(filter i386 i486 i586 i686 x86_64,$(ARCH)),)
 
 	@printf "\n    $(GREEN)✓$(RESET) Staged EFI binary.\n"
 
-	@printf "\n    $(CYAN)→$(RESET) Creating blank partition image..\n\n"
+	@printf "\n    $(CYAN)→$(RESET) Creating blank ESP image..\n\n"
 
-	@set -x; set -x; dd bs=$(PART_SIZE) count=1 if=/dev/zero of="$(BUILD)/image/partition.img" || { \
+	@set -x; set -x; dd bs=$(ESP_SIZE) count=1 if=/dev/zero of="$(BUILD)/image/esp.img" || { \
 	    code=$$?; \
-	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to create partition image. Exit $$code$(RESET)\n\n"; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to create ESP image. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
 	}
 
 	@set +x
 
-	@printf "\n    $(GREEN)✓$(RESET) Created partition image.\n"
+	@printf "\n    $(GREEN)✓$(RESET) Created ESP image.\n"
 
-	@printf "\n    $(CYAN)→$(RESET) Formatting partition image..\n\n"
+	@printf "\n    $(CYAN)→$(RESET) Formatting ESP image (FAT16)..\n\n"
 
-	@set -x; set -x; mkfs.fat -S 512 -h 2048 -n "" "$(BUILD)/image/partition.img" || { \
+	@set -x; set -x; mkfs.fat -F 16 -S 512 -h 2048 -n "EFI" "$(BUILD)/image/esp.img" || { \
 	    code=$$?; \
-	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to format partition image. Exit $$code$(RESET)\n\n"; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to format ESP image. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
 	}
 
 	@set +x
 
-	@printf "\n    $(GREEN)✓$(RESET) Formatted partition image.\n"
+	@printf "\n    $(GREEN)✓$(RESET) Formatted ESP image.\n"
 
 	@printf "\n    $(CYAN)→$(RESET) Copying filesystem..\n\n"
 
-	@set -x; set -x; mcopy -s -i "$(BUILD)/image/partition.img" "$(BUILD)/esp"/* ::/ || { \
+	@set -x; set -x; mcopy -s -i "$(BUILD)/image/esp.img" "$(BUILD)/esp"/* ::/ || { \
 	    code=$$?; \
 	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to copy filesystem. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
@@ -413,17 +420,61 @@ ifneq ($(filter i386 i486 i586 i686 x86_64,$(ARCH)),)
 
 	@printf "\n    $(GREEN)✓$(RESET) Copied filesystem.\n"
 
-	@cp "$(BUILD)/image/partition.img" "$(BUILD)/built/partition.img" || { \
+	@cp "$(BUILD)/image/esp.img" "$(BUILD)/built/esp.img" || { \
 	    code=$$?; \
-	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to stage partition image. Exit $$code$(RESET)\n\n"; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to stage ESP image. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
 	}
 
-	@printf "\n    $(GREEN)✓$(RESET) Staged partition image.\n"
+	@printf "\n    $(GREEN)✓$(RESET) Staged ESP image.\n"
+
+	@printf "\n    $(CYAN)→$(RESET) Creating blank kernel partition image..\n\n"
+
+	@set -x; set -x; dd bs=$(PART_SIZE) count=1 if=/dev/zero of="$(BUILD)/image/partition.img" || { \
+	    code=$$?; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to create kernel partition image. Exit $$code$(RESET)\n\n"; \
+	    exit $$code; \
+	}
+
+	@set +x
+
+	@printf "\n    $(GREEN)✓$(RESET) Created kernel partition image.\n"
+
+	@printf "\n    $(CYAN)→$(RESET) Formatting kernel partition image (exFAT)..\n\n"
+
+	@set -x; set -x; mkfs.fat -F 16 -S 512 -h 2048 -n "OS" "$(BUILD)/image/partition.img" || { \
+	    code=$$?; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to format kernel partition image. Exit $$code$(RESET)\n\n"; \
+	    exit $$code; \
+	}
+
+	@set +x
+
+	@printf "\n    $(GREEN)✓$(RESET) Formatted kernel partition image.\n"
+
+	@printf "\n    $(CYAN)→$(RESET) Copying kernel..\n\n"
+
+	@set -x; set -x; mcopy -i "$(BUILD)/image/partition.img" "$(BUILD)/built/kernel" ::/kernel || { \
+	    code=$$?; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to copy kernel. Exit $$code$(RESET)\n\n"; \
+	    exit $$code; \
+	}
+
+	@set +x
+
+	@printf "\n    $(GREEN)✓$(RESET) Copied kernel.\n"
+
+	@cp "$(BUILD)/image/partition.img" "$(BUILD)/built/partition.img" || { \
+	    code=$$?; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to stage kernel partition image. Exit $$code$(RESET)\n\n"; \
+	    exit $$code; \
+	}
+
+	@printf "\n    $(GREEN)✓$(RESET) Staged kernel partition image.\n"
 
 	@printf "\n    $(CYAN)→$(RESET) Partitioning disk image..\n\n"
 
-	@set -x; set -x; printf 'label: gpt\nstart=2048, size=65584, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B\n' | sfdisk "$(BUILD)/image/disk.img" || { \
+	@set -x; set -x; printf 'label: gpt\nstart=2048, size=$(ESP_SECTORS), type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B\nstart=$(PART_START), size=$(PART_SECTORS), type=EBD0A0A2-B9E5-4433-87C0-68B6B72699C7\n' | sfdisk "$(BUILD)/image/disk.img" || { \
 	    code=$$?; \
 	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to partition disk image. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
@@ -433,17 +484,29 @@ ifneq ($(filter i386 i486 i586 i686 x86_64,$(ARCH)),)
 
 	@printf "\n    $(GREEN)✓$(RESET) Partitioned disk image.\n"
 
-	@printf "\n    $(CYAN)→$(RESET) Writing filesystem into image..\n\n"
+	@printf "\n    $(CYAN)→$(RESET) Writing ESP filesystem into image..\n\n"
 
-	@set -x; set -x; dd bs=512 seek=2048 conv=notrunc if="$(BUILD)/image/partition.img" of="$(BUILD)/image/disk.img" || { \
+	@set -x; set -x; dd bs=512 seek=2048 conv=notrunc if="$(BUILD)/image/esp.img" of="$(BUILD)/image/disk.img" || { \
 	    code=$$?; \
-	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to write filesystem into image. Exit $$code$(RESET)\n\n"; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to write ESP filesystem into image. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
 	}
 
 	@set +x
 
-	@printf "\n    $(GREEN)✓$(RESET) Written filesystem into image.\n"
+	@printf "\n    $(GREEN)✓$(RESET) Written ESP filesystem into image.\n"
+
+	@printf "\n    $(CYAN)→$(RESET) Writing kernel filesystem into image..\n\n"
+
+	@set -x; set -x; dd bs=512 seek=$(PART_START) conv=notrunc if="$(BUILD)/image/partition.img" of="$(BUILD)/image/disk.img" || { \
+	    code=$$?; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to write kernel filesystem into image. Exit $$code$(RESET)\n\n"; \
+	    exit $$code; \
+	}
+
+	@set +x
+
+	@printf "\n    $(GREEN)✓$(RESET) Written kernel filesystem into image.\n"
 
 	@printf "\n    $(CYAN)→$(RESET) Writing Stage 2..\n\n"
 
@@ -483,33 +546,33 @@ else
 
 	@printf "\n    $(GREEN)✓$(RESET) Staged EFI binary.\n"
 
-	@printf "\n    $(CYAN)→$(RESET) Creating blank partition image..\n\n"
+	@printf "\n    $(CYAN)→$(RESET) Creating blank ESP image..\n\n"
 
-	@set -x; set -x; dd bs=$(PART_SIZE) count=1 if=/dev/zero of="$(BUILD)/image/partition.img" || { \
+	@set -x; set -x; dd bs=$(ESP_SIZE) count=1 if=/dev/zero of="$(BUILD)/image/esp.img" || { \
 	    code=$$?; \
-	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to create partition image. Exit $$code$(RESET)\n\n"; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to create ESP image. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
 	}
 
 	@set +x
 
-	@printf "\n    $(GREEN)✓$(RESET) Created partition image.\n"
+	@printf "\n    $(GREEN)✓$(RESET) Created ESP image.\n"
 
-	@printf "\n    $(CYAN)→$(RESET) Formatting partition image..\n\n"
+	@printf "\n    $(CYAN)→$(RESET) Formatting ESP image (FAT16)..\n\n"
 
-	@set -x; set -x; mkfs.fat -S 512 -h 2048 -n "" "$(BUILD)/image/partition.img" || { \
+	@set -x; set -x; mkfs.fat -F 16 -S 512 -h 2048 -n "EFI" "$(BUILD)/image/esp.img" || { \
 	    code=$$?; \
-	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to format partition image. Exit $$code$(RESET)\n\n"; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to format ESP image. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
 	}
 
 	@set +x
 
-	@printf "\n    $(GREEN)✓$(RESET) Formatted partition image.\n"
+	@printf "\n    $(GREEN)✓$(RESET) Formatted ESP image.\n"
 
 	@printf "\n    $(CYAN)→$(RESET) Copying filesystem..\n\n"
 
-	@set -x; set -x; mcopy -s -i "$(BUILD)/image/partition.img" "$(BUILD)/esp"/* ::/ || { \
+	@set -x; set -x; mcopy -s -i "$(BUILD)/image/esp.img" "$(BUILD)/esp"/* ::/ || { \
 	    code=$$?; \
 	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to copy filesystem. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
@@ -519,17 +582,61 @@ else
 
 	@printf "\n    $(GREEN)✓$(RESET) Copied filesystem.\n"
 
-	@cp "$(BUILD)/image/partition.img" "$(BUILD)/built/partition.img" || { \
+	@cp "$(BUILD)/image/esp.img" "$(BUILD)/built/esp.img" || { \
 	    code=$$?; \
-	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to stage partition image. Exit $$code$(RESET)\n\n"; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to stage ESP image. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
 	}
 
-	@printf "\n    $(GREEN)✓$(RESET) Staged partition image.\n"
+	@printf "\n    $(GREEN)✓$(RESET) Staged ESP image.\n"
+
+	@printf "\n    $(CYAN)→$(RESET) Creating blank kernel partition image..\n\n"
+
+	@set -x; set -x; dd bs=$(PART_SIZE) count=1 if=/dev/zero of="$(BUILD)/image/partition.img" || { \
+	    code=$$?; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to create kernel partition image. Exit $$code$(RESET)\n\n"; \
+	    exit $$code; \
+	}
+
+	@set +x
+
+	@printf "\n    $(GREEN)✓$(RESET) Created kernel partition image.\n"
+
+	@printf "\n    $(CYAN)→$(RESET) Formatting kernel partition image..\n\n"
+
+	@set -x; set -x; mkfs.fat -F 16 -S 512 -h 2048 -n "OS" "$(BUILD)/image/partition.img" || { \
+	    code=$$?; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to format kernel partition image. Exit $$code$(RESET)\n\n"; \
+	    exit $$code; \
+	}
+
+	@set +x
+
+	@printf "\n    $(GREEN)✓$(RESET) Formatted kernel partition image.\n"
+
+	@printf "\n    $(CYAN)→$(RESET) Copying kernel..\n\n"
+
+	@set -x; set -x; mcopy -i "$(BUILD)/image/partition.img" "$(BUILD)/built/kernel" ::/kernel || { \
+	    code=$$?; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to copy kernel. Exit $$code$(RESET)\n\n"; \
+	    exit $$code; \
+	}
+
+	@set +x
+
+	@printf "\n    $(GREEN)✓$(RESET) Copied kernel.\n"
+
+	@cp "$(BUILD)/image/partition.img" "$(BUILD)/built/partition.img" || { \
+	    code=$$?; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to stage kernel partition image. Exit $$code$(RESET)\n\n"; \
+	    exit $$code; \
+	}
+
+	@printf "\n    $(GREEN)✓$(RESET) Staged kernel partition image.\n"
 
 	@printf "\n    $(CYAN)→$(RESET) Repartitioning disk image for UEFI..\n\n"
 
-	@set -x; set -x; printf 'label: gpt\nstart=2048, size=65584, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B\n' | sfdisk "$(BUILD)/image/disk.img" || { \
+	@set -x; set -x; printf 'label: gpt\nstart=2048, size=$(ESP_SECTORS), type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B\nstart=$(PART_START), size=$(PART_SECTORS), type=EBD0A0A2-B9E5-4433-87C0-68B6B72699C7\n' | sfdisk "$(BUILD)/image/disk.img" || { \
 	    code=$$?; \
 	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to repartition disk image. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
@@ -539,17 +646,29 @@ else
 
 	@printf "\n    $(GREEN)✓$(RESET) Repartitioned disk image.\n"
 
-	@printf "\n    $(CYAN)→$(RESET) Writing filesystem into image..\n\n"
+	@printf "\n    $(CYAN)→$(RESET) Writing ESP filesystem into image..\n\n"
 
-	@set -x; set -x; dd bs=512 seek=2048 conv=notrunc if="$(BUILD)/image/partition.img" of="$(BUILD)/image/disk.img" || { \
+	@set -x; set -x; dd bs=512 seek=2048 conv=notrunc if="$(BUILD)/image/esp.img" of="$(BUILD)/image/disk.img" || { \
 	    code=$$?; \
-	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to write filesystem into image. Exit $$code$(RESET)\n\n"; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to write ESP filesystem into image. Exit $$code$(RESET)\n\n"; \
 	    exit $$code; \
 	}
 
 	@set +x
 
-	@printf "\n    $(GREEN)✓$(RESET) Written filesystem into image.\n"
+	@printf "\n    $(GREEN)✓$(RESET) Written ESP filesystem into image.\n"
+
+	@printf "\n    $(CYAN)→$(RESET) Writing kernel filesystem into image..\n\n"
+
+	@set -x; set -x; dd bs=512 seek=$(PART_START) conv=notrunc if="$(BUILD)/image/partition.img" of="$(BUILD)/image/disk.img" || { \
+	    code=$$?; \
+	    printf "\n$(RED)✘$(RESET) $(BOLD)Failed to write kernel filesystem into image. Exit $$code$(RESET)\n\n"; \
+	    exit $$code; \
+	}
+
+	@set +x
+
+	@printf "\n    $(GREEN)✓$(RESET) Written kernel filesystem into image.\n"
 endif
 
 	@cp "$(BUILD)/image/disk.img" "$(BUILD)/built/disk.img" || { \

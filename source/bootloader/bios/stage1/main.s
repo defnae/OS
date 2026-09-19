@@ -6,13 +6,16 @@
 
 .code16
 
-.equ LBA_START, 34
+.equ START, 34
 .ifndef SECTORS
 .equ SECTORS, 64
 .endif
+.ifndef DISK
+.equ DISK, 2047
+.endif
 
-.equ LOAD_SEG, 0x0000
-.equ LOAD_OFF, 0x7E00
+.equ SEGMENT, 0x0000
+.equ OFFSET, 0x7E00
 
 .equ TARGET, 0x00007E00
 .equ COM1, 0x3F8
@@ -129,10 +132,10 @@ dap:
     .byte 0x00
 
     .word SECTORS
-    .word LOAD_OFF
-    .word LOAD_SEG
+    .word OFFSET
+    .word SEGMENT
 
-    .long LBA_START
+    .long START
     .long 0
 
 .fill 446 - (. - _start), 1, 0 # Padding
@@ -144,7 +147,7 @@ dap:
 .byte 0xEE # Partition Type (0xEE = GPT Protective)
 .byte 0xFF, 0xFF, 0xFF # Ending CHS (Maximum)
 .long 0x00000001 # Starting LBA (Sector 1, GPT Header)
-.long 0x000007FF # Sector Count
+.long DISK - 1 # Sector Count
 
 .fill 16, 1, 0 # Second Partition Entry (Empty)
 
