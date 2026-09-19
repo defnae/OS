@@ -38,7 +38,7 @@ ifeq ($(ARCH), x86_64)
     MACHINE := 0x8664
     EFI := BOOTX64.EFI
 
-    QCMD := qemu-system-x86_64 -M q35 -nographic -nodefaults -serial stdio -smp 1 -m 128M -drive file=$(BUILD)/built/disk.img,format=raw -net none -no-reboot
+    QCMD := qemu-system-x86_64 -M q35 -nographic -nodefaults -serial stdio -smp 1 -m 128M -drive file=$(BUILD)/built/disk.img,format=raw -net none -no-reboot -d int,cpu_reset -D "$(LOG)"
 ifeq ($(BOOT), UEFI)
     QCMD := $(QCMD) -drive file="$$FD_X86_64",format=raw,readonly=true,if=pflash
 else ifneq ($(BOOT), BIOS)
@@ -53,7 +53,7 @@ else ifneq ($(filter i386 i486 i586 i686,$(ARCH)),)
     MACHINE := 0x14C
     EFI := BOOTIA32.EFI
 
-    QCMD := qemu-system-i386 -M q35 -nographic -nodefaults -serial stdio -smp 1 -m 128M -drive file=$(BUILD)/built/disk.img,format=raw -net none -no-reboot
+    QCMD := qemu-system-i386 -M q35 -nographic -nodefaults -serial stdio -smp 1 -m 128M -drive file=$(BUILD)/built/disk.img,format=raw -net none -no-reboot -d int,cpu_reset -D "$(LOG)"
 ifeq ($(BOOT), UEFI)
     QCMD := $(QCMD) -drive file="$$FD_IA_32",format=raw,readonly=true,if=pflash
 else ifneq ($(BOOT), BIOS)
@@ -68,7 +68,7 @@ else ifeq ($(ARCH), aarch64)
     MACHINE := 0xAA64
     EFI := BOOTAA64.EFI
 
-    QCMD := qemu-system-aarch64 -M virt -nographic -nodefaults -serial stdio -cpu max -smp 1 -m 128M -drive file="$$FD_ARM64",format=raw,readonly=true,if=pflash -drive file=$(BUILD)/built/disk.img,format=raw -net none -no-reboot
+    QCMD := qemu-system-aarch64 -M virt -nographic -nodefaults -serial stdio -cpu max -smp 1 -m 128M -drive file="$$FD_ARM64",format=raw,readonly=true,if=pflash -drive file=$(BUILD)/built/disk.img,format=raw -net none -no-reboot -d int,cpu_reset -D "$(LOG)"
 ifneq ($(BOOT), UEFI)
     $(error Unsupported boot path: $(BOOT). Supported: UEFI.)
 endif
@@ -81,7 +81,7 @@ else ifeq ($(ARCH), armv7l)
     MACHINE := 0x1C2
     EFI := BOOTARM.EFI
 
-    QCMD := qemu-system-arm -M virt -nographic -nodefaults -serial stdio -smp 1 -m 128M -drive file="$$FD_ARM",format=raw,readonly=true,if=pflash -drive file=$(BUILD)/built/disk.img,format=raw -vga none -net none -no-reboot
+    QCMD := qemu-system-arm -M virt -nographic -nodefaults -serial stdio -smp 1 -m 128M -drive file="$$FD_ARM",format=raw,readonly=true,if=pflash -drive file=$(BUILD)/built/disk.img,format=raw -vga none -net none -no-reboot -d int,cpu_reset -D "$(LOG)"
 ifneq ($(BOOT), UEFI)
     $(error Unsupported boot path: $(BOOT). Supported: UEFI.)
 endif
@@ -94,7 +94,7 @@ else ifeq ($(ARCH), riscv64)
     MACHINE := 0x5064
     EFI := BOOTRISCV64.EFI
 
-    QCMD := qemu-system-riscv64 -M virt -nographic -nodefaults -serial stdio -smp 1 -m 128M -drive file="$$FD_RISCV",format=raw,readonly=true,if=pflash -drive file=$(BUILD)/built/disk.img,format=raw -vga none -net none -no-reboot
+    QCMD := qemu-system-riscv64 -M virt -nographic -nodefaults -serial stdio -smp 1 -m 128M -drive file="$$FD_RISCV",format=raw,readonly=true,if=pflash -drive file=$(BUILD)/built/disk.img,format=raw -vga none -net none -no-reboot -d int,cpu_reset -D "$(LOG)"
 ifneq ($(BOOT), UEFI)
     $(error Unsupported boot path: $(BOOT). Supported: UEFI.)
 endif
@@ -107,7 +107,7 @@ else ifeq ($(ARCH), loongarch64)
     MACHINE := 0x6264
     EFI := BOOTLOONGARCH64.EFI
 
-    QCMD := qemu-system-loongarch64 -M virt -nographic -nodefaults -serial stdio -smp 1 -m 128M -drive file="$$FD_LOONGARCH",format=raw,readonly=true,if=pflash -drive file=$(BUILD)/built/disk.img,format=raw -vga none -net none -no-reboot
+    QCMD := qemu-system-loongarch64 -M virt -nographic -nodefaults -serial stdio -smp 1 -m 128M -drive file="$$FD_LOONGARCH",format=raw,readonly=true,if=pflash -drive file=$(BUILD)/built/disk.img,format=raw -vga none -net none -no-reboot -d int,cpu_reset -D "$(LOG)"
 ifneq ($(BOOT), UEFI)
     $(error Unsupported boot path: $(BOOT). Supported: UEFI.)
 endif

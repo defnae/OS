@@ -972,6 +972,17 @@ typedef struct _EFI_LOADED_IMAGE_PROTOCOL {
     EFI_IMAGE_UNLOAD Unload;
 } EFI_LOADED_IMAGE_PROTOCOL;
 
+/* 10: Protocols — Device Path Protocol */
+
+/* 10.2: EFI Device Path Protocol */
+
+typedef struct _EFI_DEVICE_PATH_PROTOCOL {
+    UINT8 Type;
+    UINT8 SubType;
+    UINT8 Length[2];
+} EFI_DEVICE_PATH_PROTOCOL;
+
+
 /* 12: Protocols — Console Support */
 
 /* 12.1: Console I/O Protocol */
@@ -1467,6 +1478,11 @@ typedef struct _EFI_STORAGE_SECURITY_COMMAND_PROTOCOL {
 #define EFI_LOADED_IMAGE_PROTOCOL_GUID { 0x5B1B31A1, 0x9562, 0x11D2, { 0x8E, 0x3F, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B } }
 
 static EFI_GUID EfiLoadedImageProtocolGuid = EFI_LOADED_IMAGE_PROTOCOL_GUID;
+
+/* 10.2: EFI Device Path Protocol */
+#define EFI_DEVICE_PATH_PROTOCOL_GUID { 0x09576E91, 0x6D3F, 0x11D2, { 0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B}}
+
+static EFI_GUID EfiDevicePathProtocolGuid = EFI_DEVICE_PATH_PROTOCOL_GUID;
 
 /* 12.3: Simple Text Input Protocol */
 #define EFI_SIMPLE_TEXT_INPUT_PROTOCOL_GUID { 0x387477C1, 0x69C7, 0x11D2, { 0x8E, 0x39, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B } }

@@ -1,4 +1,4 @@
-/* source/bootloader/uefi/linker.ld */
+/* source/kernel/linker.ld */
 
 PHDRS {
     text PT_LOAD FLAGS(5);
