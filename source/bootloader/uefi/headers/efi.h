@@ -136,8 +136,7 @@ typedef struct _EFI_MEMORY_DESCRIPTOR {
     UINT32 Type;
     EFI_PHYSICAL_ADDRESS PhysicalStart;
     EFI_VIRTUAL_ADDRESS VirtualStart;
-    UINT64 NumberOfPages;
-    UINT64 Attribute;
+    UINT64 NumberOfPages, Attribute;
 } EFI_MEMORY_DESCRIPTOR;
 
 /* 7.3: Protocol Handler Services (Helper Types) */
@@ -154,10 +153,8 @@ typedef UINTN EFI_LOCATE_SEARCH_TYPE;
 
 /* 7.3.3: EFI_OPEN_PROTOCOL_INFORMATION_ENTRY */
 typedef struct _EFI_OPEN_PROTOCOL_INFORMATION_ENTRY {
-    EFI_HANDLE AgentHandle;
-    EFI_HANDLE ControllerHandle;
-    UINT32 Attributes;
-    UINT32 OpenCount;
+    EFI_HANDLE AgentHandle, ControllerHandle;
+    UINT32 Attributes, OpenCount;
 } EFI_OPEN_PROTOCOL_INFORMATION_ENTRY;
 
 #define EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL 0x00000001
@@ -172,22 +169,15 @@ typedef struct _EFI_OPEN_PROTOCOL_INFORMATION_ENTRY {
 /* 8.3.1: EFI_TIME */
 typedef struct _EFI_TIME {
     UINT16 Year;
-    UINT8 Month;
-    UINT8 Day;
-    UINT8 Hour;
-    UINT8 Minute;
-    UINT8 Second;
-    UINT8 Pad1;
+    UINT8 Month, Day, Hour, Minute, Second, Pad1;
     UINT32 Nanosecond;
     INT16 TimeZone;
-    UINT8 Daylight;
-    UINT8 Pad2;
+    UINT8 Daylight, Pad2;
 } EFI_TIME;
 
 /* 8.3.2: EFI_TIME_CAPABILITIES */
 typedef struct _EFI_TIME_CAPABILITIES {
-    UINT32 Resolution;
-    UINT32 Accuracy;
+    UINT32 Resolution, Accuracy;
     BOOLEAN SetsToZero;
 } EFI_TIME_CAPABILITIES;
 
@@ -203,9 +193,7 @@ typedef UINTN EFI_RESET_TYPE;
 /* 8.5.2: EFI_CAPSULE_HEADER */
 typedef struct _EFI_CAPSULE_HEADER {
     EFI_GUID CapsuleGuid;
-    UINT32 HeaderSize;
-    UINT32 Flags;
-    UINT32 CapsuleImageSize;
+    UINT32 HeaderSize, Flags, CapsuleImageSize;
 } EFI_CAPSULE_HEADER;
 
 /* 12.3: Simple Text Input Protocol (Helper Types) */
@@ -265,11 +253,7 @@ typedef struct {
 
 /* 12.4.3: SIMPLE_TEXT_OUTPUT_MODE */
 typedef struct _SIMPLE_TEXT_OUTPUT_MODE {
-    INT32 MaxMode;
-    INT32 Mode;
-    INT32 Attribute;
-    INT32 CursorColumn;
-    INT32 CursorRow;
+    INT32 MaxMode, Mode, Attribute, CursorColumn, CursorRow;
     BOOLEAN CursorVisible;
 } SIMPLE_TEXT_OUTPUT_MODE;
 
@@ -277,10 +261,7 @@ typedef struct _SIMPLE_TEXT_OUTPUT_MODE {
 
 /* 12.9.1: EFI_PIXEL_BITMASK */
 typedef struct {
-    UINT32 RedMask;
-    UINT32 GreenMask;
-    UINT32 BlueMask;
-    UINT32 ReservedMask;
+    UINT32 RedMask, GreenMask, BlueMask, ReservedMask;
 } EFI_PIXEL_BITMASK;
 
 /* 12.9.1: EFI_GRAPHICS_PIXEL_FORMAT */
@@ -301,17 +282,12 @@ typedef UINTN EFI_GRAPHICS_OUTPUT_BLT_OPERATION;
 
 /* 12.9.1: EFI_GRAPHICS_OUTPUT_BLT_PIXEL */
 typedef struct {
-    UINT8 Blue;
-    UINT8 Green;
-    UINT8 Red;
-    UINT8 Reserved;
+    UINT8 Blue, Green, Red, Reserved;
 } EFI_GRAPHICS_OUTPUT_BLT_PIXEL;
 
 /* 12.9.1: EFI_GRAPHICS_OUTPUT_MODE_INFORMATION */
 typedef struct {
-    UINT32 Version;
-    UINT32 HorizontalResolution;
-    UINT32 VerticalResolution;
+    UINT32 Version, HorizontalResolution, VerticalResolution;
     EFI_GRAPHICS_PIXEL_FORMAT PixelFormat;
     EFI_PIXEL_BITMASK PixelInformation;
     UINT32 PixelsPerScanLine;
@@ -319,8 +295,7 @@ typedef struct {
 
 /* 12.9.2: EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE */
 typedef struct {
-    UINT32 MaxMode;
-    UINT32 Mode;
+    UINT32 MaxMode, Mode;
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *Info;
     UINTN SizeOfInfo;
     EFI_PHYSICAL_ADDRESS FrameBufferBase;
@@ -332,17 +307,10 @@ typedef struct {
 /* 13.1.1: EFI_BLOCK_IO_MEDIA */
 typedef struct {
     UINT32 MediaId;
-    BOOLEAN RemovableMedia;
-    BOOLEAN MediaPresent;
-    BOOLEAN LogicalPartition;
-    BOOLEAN ReadOnly;
-    BOOLEAN WriteCaching;
-    UINT32 BlockSize;
-    UINT32 IoAlign;
-    EFI_LBA LastBlock;
-    EFI_LBA LowestAlignedLba;
-    UINT32 LogicalBlocksPerPhysicalBlock;
-    UINT32 OptimalTransferLengthGranularity;
+    BOOLEAN RemovableMedia, MediaPresent, LogicalPartition, ReadOnly, WriteCaching;
+    UINT32 BlockSize, IoAlign;
+    EFI_LBA LastBlock, LowestAlignedLba;
+    UINT32 LogicalBlocksPerPhysicalBlock, OptimalTransferLengthGranularity;
 } EFI_BLOCK_IO_MEDIA;
 
 /* 13.5: EFI File Protocol (Helper Types) */
@@ -357,14 +325,10 @@ typedef struct {
 
 /* 13.5.16: EFI_FILE_INFO */
 typedef struct {
-    UINT64 Size;
-    UINT64 FileSize;
-    UINT64 PhysicalSize;
-    EFI_TIME CreateTime;
-    EFI_TIME LastAccessTime;
-    EFI_TIME ModificationTime;
+    UINT64 Size, FileSize, PhysicalSize;
+    EFI_TIME CreateTime, LastAccessTime, ModificationTime;
     UINT64 Attribute;
-    CHAR16 FileName[];
+    CHAR16 FileName[1];
 } EFI_FILE_INFO;
 
 /* 4: EFI System Table */
@@ -382,10 +346,7 @@ typedef EFI_STATUS (EFIAPI *EFI_IMAGE_ENTRY_POINT) (
 /* 4.2.1: EFI_TABLE_HEADER */
 typedef struct {
     UINT64 Signature;
-    UINT32 HeaderSize;
-    UINT32 Revision;
-    UINT32 CRC32;
-    UINT32 Reserved;
+    UINT32 HeaderSize, Revision, CRC32, Reserved;
 } EFI_TABLE_HEADER;
 
 /* 4.3: EFI System Table */
@@ -394,7 +355,7 @@ typedef struct {
 typedef struct _EFI_SYSTEM_TABLE {
     EFI_TABLE_HEADER Hdr;
     CHAR16 *FirmwareVendor;
-    UINT32 FirmwareRevision;
+    UINT32 FirmwareRevision, Pad1;
     EFI_HANDLE ConsoleInHandle;
     EFI_SIMPLE_TEXT_INPUT_PROTOCOL *ConIn;
     EFI_HANDLE ConsoleOutHandle;
@@ -967,8 +928,7 @@ typedef struct _EFI_LOADED_IMAGE_PROTOCOL {
     /* 9.1.1: Location where image was loaded */
     VOID *ImageBase;
     UINT64 ImageSize;
-    EFI_MEMORY_TYPE ImageCodeType;
-    EFI_MEMORY_TYPE ImageDataType;
+    EFI_MEMORY_TYPE ImageCodeType, ImageDataType;
     EFI_IMAGE_UNLOAD Unload;
 } EFI_LOADED_IMAGE_PROTOCOL;
 
@@ -977,9 +937,7 @@ typedef struct _EFI_LOADED_IMAGE_PROTOCOL {
 /* 10.2: EFI Device Path Protocol */
 
 typedef struct _EFI_DEVICE_PATH_PROTOCOL {
-    UINT8 Type;
-    UINT8 SubType;
-    UINT8 Length[2];
+    UINT8 Type, SubTypeLength[2];
 } EFI_DEVICE_PATH_PROTOCOL;
 
 

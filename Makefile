@@ -117,7 +117,7 @@ $(error Unsupported architecture: $(ARCH). Supported: x86_64, i386/i486/i586/i68
 endif
 
 CFLAGS ?= -I$(SOURCE) -std=iso9899:199409 -nostdlib -funsigned-char -fshort-wchar -fpic -fpie -fomit-frame-pointer -O3
-CFLAGS := $(CFLAGS) -Wno-everything -Wno-error
+CFLAGS := $(CFLAGS) -Weverything -Wdeprecated-non-prototype -Wno-typedef-redefinition -Wno-reserved-identifier -Wno-comment -Wno-error
 LFLAGS ?= -static
 
 .ONESHELL:
