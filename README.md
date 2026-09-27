@@ -1,7 +1,7 @@
 <!--README.md-->
 
-<div align="center"><img src="https://img.shields.io/gitea/stars/defnae/idk?gitea_url=https://git.tarxz.zip" alt="Stars"><span> </span><img src="https://img.shields.io/github/stars/defnae/idk" alt="GitHub Stars"></div>
+<div align="center"><img src="https://img.shields.io/gitea/stars/defnae/OS?gitea_url=https://git.tarxz.zip" alt="Stars"><span> </span><img src="https://img.shields.io/github/stars/defnae/OS" alt="GitHub Stars"></div>
 
-<h1 align="center">idk</h1>
+<h1 align="center">OS</h1>
 
-<p align="center">Template for my C projects.</p>
+<p align="center">A multi-architecture OS.</p>
